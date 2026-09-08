@@ -1,6 +1,22 @@
 spring:
   application:
     name: transaction-service
+  config:
+    import: "configserver:http://localhost:8089/"
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: "Transaction Service"
+    description: "Transaction Management Service"
+    version: "1.0"
 
   datasource:
     url: jdbc:postgresql://localhost:5432/transaction_db
@@ -19,6 +35,7 @@ server:
 eureka:
   instance:
     prefer-ip-address: true
+    hostname: localhost
 
   client:
     service-url:

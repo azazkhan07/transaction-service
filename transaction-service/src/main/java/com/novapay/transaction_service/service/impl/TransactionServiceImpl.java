@@ -226,4 +226,32 @@ public class TransactionServiceImpl implements TransactionService {
 
         return transactions.map(transactionMapper::toTransactionResponse);
     }
+
+    @Override
+    @Transactional
+    public TransactionResponse createSagaTransaction(TransactionRequest request) {
+
+        LOGGER.info("Saga transaction creation received | senderWalletId={} receiverWalletId={} amount={}",
+                request.getSenderWalletId(),
+                request.getReceiverWalletId(),
+                request.getAmount());
+
+        Transaction transaction = Transaction.builder()
+                .senderWalletId(request.getSenderWalletId())
+                .receiverWalletId(request.getReceiverWalletId())
+                .amount(request.getAmount())
+                .type(TransactionType.TRANSFER)
+                .status(TransactionStatus.SUCCESS)
+                .remarks(request.getRemarks())
+                .message("Transfer Successful")
+                .build();
+
+        Transaction savedTransaction = transactionRepository.save(transaction);
+
+        LOGGER.info("Saga transaction created successfully | referenceId={}",
+                savedTransaction.getReferenceId());
+
+        return transactionMapper.toTransactionResponse(savedTransaction);
+    }
+
 }

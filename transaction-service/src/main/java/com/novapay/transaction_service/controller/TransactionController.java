@@ -162,7 +162,6 @@ public class TransactionController {
     @Operation(summary = "Get transactions by date range")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Transactions fetched successfully"),
     @ApiResponse(responseCode = "404", description = "Transaction status not found")})
-
     @GetMapping("/filter/date-range")
     public ResponseEntity<Page<TransactionResponse>> getTransactionsByDateRange(
             @RequestParam LocalDate from,

@@ -27,4 +27,6 @@ public interface TransactionService {
     Page<TransactionResponse> getTransactionsByStatus(TransactionStatus status, Pageable pageable);
 
     Page<TransactionResponse> getTransactionsByDateRange(LocalDateTime from, LocalDateTime to, Pageable pageable);
+
+    TransactionResponse createSagaTransaction(TransactionRequest request);
 }
