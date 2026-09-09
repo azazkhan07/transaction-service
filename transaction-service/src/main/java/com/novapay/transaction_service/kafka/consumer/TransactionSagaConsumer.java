@@ -10,13 +10,21 @@ import com.novapay.transaction_service.saga.event.TransactionFailedEvent;
 import com.novapay.transaction_service.service.TransactionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@RetryableTopic(
+        attempts = "4",
+        backoff = @Backoff(
+                delay = 2000,
+                multiplier = 2.0))
 @KafkaListener(
         topics = KafkaTopics.TRANSACTION_COMMANDS,
         groupId = "transaction-saga-group")
@@ -28,36 +36,38 @@ public class TransactionSagaConsumer {
     @KafkaHandler
     public void handleCreateTransaction(CreateTransactionCommand command) {
 
-        log.info("Received CREATE_TRANSACTION command | paymentReference={}",
+        log.info(
+                "Received CREATE_TRANSACTION command | paymentReference={}",
                 command.paymentReference());
 
-        try {
-            TransactionRequest request = new TransactionRequest();
+        TransactionRequest request = new TransactionRequest();
 
-            request.setSenderWalletId(command.payerWalletId());
-            request.setReceiverWalletId(command.payeeWalletId());
-            request.setAmount(command.amount());
-            request.setRemarks(null);
+        request.setSenderWalletId(command.payerWalletId());
+        request.setReceiverWalletId(command.payeeWalletId());
+        request.setAmount(command.amount());
+        request.setRemarks(null);
 
-            TransactionResponse response =
-                    transactionService.createSagaTransaction(request);
+        TransactionResponse response =
+                transactionService.createSagaTransaction(request);
 
-            transactionSagaEventProducer.publishTransactionCreated(
-                    new TransactionCreatedEvent(
-                            command.paymentReference(),
-                            command.payerWalletId(),
-                            command.payeeWalletId(),
-                            command.amount(),
-                            response.referenceId()));
+        transactionSagaEventProducer.publishTransactionCreated(
+                new TransactionCreatedEvent(
+                        command.paymentReference(),
+                        command.payerWalletId(),
+                        command.payeeWalletId(),
+                        command.amount(),
+                        response.referenceId()));
 
-        } catch (Exception e) {
-            log.error("Transaction creation failed | paymentReference={}",
-                    command.paymentReference(), e);
+    }
 
-            transactionSagaEventProducer.publishTransactionFailed(
-                    new TransactionFailedEvent(
-                            command.paymentReference(),
-                            e.getMessage()));
-        }
+    @DltHandler
+    public void handleDlt(CreateTransactionCommand command) {
+
+        log.error("Message moved to DLT after retries exhausted | paymentReference={}", command.paymentReference());
+
+        transactionSagaEventProducer.publishTransactionFailed(
+                new TransactionFailedEvent(
+                        command.paymentReference(),
+                        "Transaction creation failed after retries"));
     }
 }

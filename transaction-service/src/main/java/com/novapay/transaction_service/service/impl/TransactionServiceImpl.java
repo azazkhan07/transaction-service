@@ -211,10 +211,7 @@ public class TransactionServiceImpl implements TransactionService {
             LocalDateTime to,
             Pageable pageable) {
 
-        LOGGER.info(
-                "Fetching transactions between {} and {}",
-                from,
-                to);
+        LOGGER.info("Fetching transactions between {} and {}", from, to);
 
         Page<Transaction> transactions =
                 transactionRepository.findByCreatedAtBetween(
@@ -253,5 +250,4 @@ public class TransactionServiceImpl implements TransactionService {
 
         return transactionMapper.toTransactionResponse(savedTransaction);
     }
-
 }
