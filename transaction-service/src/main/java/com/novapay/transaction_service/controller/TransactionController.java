@@ -20,10 +20,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
 
 @Tag(name = "Transaction APIs", description = "Money transfer endpoints")
 @RestController
@@ -32,7 +30,6 @@ import java.time.LocalDateTime;
 public class TransactionController {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionController.class);
-
     private final TransactionService transactionService;
 
     @Operation(summary = "Transfer money between wallets")
@@ -98,9 +95,13 @@ public class TransactionController {
     @ApiResponse(responseCode = "404", description = "transaction not found"),
     @ApiResponse(responseCode = "400", description = "Transaction can not be reversed")})
     @PutMapping("/reverse/{referenceId}")
-    public ResponseEntity<TransactionResponse> reverseTransaction(@PathVariable String referenceId) {
+    public ResponseEntity<TransactionResponse> reverseTransaction(
+            @PathVariable String referenceId) {
+
         LOGGER.info("Reversal API called for referenceId: {}", referenceId);
-        TransactionResponse response = transactionService.reverseTransaction(referenceId);
+
+        TransactionResponse response =
+                transactionService.reverseTransaction(referenceId);
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -174,12 +175,10 @@ public class TransactionController {
         Pageable pageable = PageRequest.of(
                 page,
                 size,
-                Sort.by(
-                        Sort.Direction.fromString(sortDirection),
+                Sort.by(Sort.Direction.fromString(sortDirection),
                         sortBy));
 
-        LocalDateTime fromDateTime =
-                from.atStartOfDay();
+        LocalDateTime fromDateTime = from.atStartOfDay();
 
         LocalDateTime toDateTime =
                 to.atTime(23, 59, 59);

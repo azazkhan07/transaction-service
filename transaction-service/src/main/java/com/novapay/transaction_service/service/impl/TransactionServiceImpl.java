@@ -125,7 +125,10 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Transaction not found with reference id " + referenceId));
 
         if (successTransaction.getStatus() == TransactionStatus.REVERSED) {
-            throw new IllegalStateException("Transaction already reversed with referenceId " + referenceId + successTransaction.getStatus());
+            return transactionRepository
+                    .findByRemarks("Reversal of " + referenceId)
+                    .map(transactionMapper::toTransactionResponse)
+                    .orElseThrow(() -> new IllegalStateException("Reversal transaction not found for referenceId " + referenceId));
         }
 
         if (successTransaction.getStatus() != TransactionStatus.SUCCESS) {
@@ -134,13 +137,11 @@ public class TransactionServiceImpl implements TransactionService {
 
         BigDecimal amount = successTransaction.getAmount();
 
-        walletClient.debitWallet(
-                new DebitRequest(
+        walletClient.debitWallet(new DebitRequest(
                         successTransaction.getReceiverWalletId(),
                         amount));
 
-        walletClient.creditWallet(
-                new CreditRequest(
+        walletClient.creditWallet(new CreditRequest(
                         successTransaction.getSenderWalletId(),
                         amount));
 
@@ -168,14 +169,12 @@ public class TransactionServiceImpl implements TransactionService {
     @Transactional(readOnly = true)
     public Page<TransactionResponse> getAllTransactions(Pageable pageable) {
 
-        LOGGER.info(
-                "Fetching all transactions | page={} size={}",
+        LOGGER.info("Fetching all transactions | page={} size={}",
                 pageable.getPageNumber(),
                 pageable.getPageSize());
 
         Page<Transaction> transactions = transactionRepository.findAll(pageable);
-        LOGGER.info(
-                "Transaction fetched successfully | totalRecords={}",
+        LOGGER.info("Transaction fetched successfully | totalRecords={}",
                 transactions.getTotalElements());
 
         return transactions.map(transactionMapper::toTransactionResponse);
@@ -187,8 +186,7 @@ public class TransactionServiceImpl implements TransactionService {
             TransactionStatus status,
             Pageable pageable) {
 
-        LOGGER.info(
-                "Fetching transactions by status={} page={} size={}",
+        LOGGER.info("Fetching transactions by status={} page={} size={}",
                 status,
                 pageable.getPageNumber(),
                 pageable.getPageSize());
@@ -196,8 +194,7 @@ public class TransactionServiceImpl implements TransactionService {
         Page<Transaction> transactions =
                 transactionRepository.findByStatus(status, pageable);
 
-        LOGGER.info(
-                "Transactions fetched successfully | status={} totalRecords={}",
+        LOGGER.info("Transactions fetched successfully | status={} totalRecords={}",
                 status,
                 transactions.getTotalElements());
 
