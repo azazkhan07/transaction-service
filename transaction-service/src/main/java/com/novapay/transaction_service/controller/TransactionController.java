@@ -95,13 +95,12 @@ public class TransactionController {
     @ApiResponse(responseCode = "404", description = "transaction not found"),
     @ApiResponse(responseCode = "400", description = "Transaction can not be reversed")})
     @PutMapping("/reverse/{referenceId}")
-    public ResponseEntity<TransactionResponse> reverseTransaction(
-            @PathVariable String referenceId) {
+    public ResponseEntity<TransactionResponse> reverseTransaction(@PathVariable String referenceId) {
 
         LOGGER.info("Reversal API called for referenceId: {}", referenceId);
 
-        TransactionResponse response =
-                transactionService.reverseTransaction(referenceId);
+        TransactionResponse response = transactionService.reverseTransaction(referenceId);
+
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
@@ -175,8 +174,7 @@ public class TransactionController {
         Pageable pageable = PageRequest.of(
                 page,
                 size,
-                Sort.by(Sort.Direction.fromString(sortDirection),
-                        sortBy));
+                Sort.by(Sort.Direction.fromString(sortDirection), sortBy));
 
         LocalDateTime fromDateTime = from.atStartOfDay();
 
